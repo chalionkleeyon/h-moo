@@ -1,0 +1,92 @@
+{
+  "trip": {
+    "title": "Our Honeymoon",
+    "subtitle": "",
+    "dates": "Autumn 2026"
+  },
+  "categories": [
+    { "id": "transport",   "label": "Transportation", "color": "#2f6fb0" },
+    { "id": "dining",      "label": "Dining",         "color": "#c0562e" },
+    { "id": "boat",        "label": "Boat outing",    "color": "#1d9e75" },
+    { "id": "winery",      "label": "Winery",         "color": "#8e3b63" },
+    { "id": "sightseeing", "label": "Sightseeing",    "color": "#b8811a" },
+    { "id": "lodging",     "label": "Lodging",        "color": "#6b6b6b" },
+    { "id": "leisure",     "label": "Free time",      "color": "#4f8a3d" }
+  ],
+  "legs": [
+    {
+      "id": "paris",
+      "name": "Paris, France",
+      "when": "Days 1–3",
+      "lat": 48.8566,
+      "lng": 2.3522,
+      "photo": "",
+      "summary": "Where it all begins — croissants, the Seine at dusk, and a kiss under the Eiffel Tower.",
+      "lodging": "Hôtel des Amoureux, Le Marais",
+      "highlights": [],
+      "notes": "",
+      "days": [
+        {
+          "id": "d1",
+          "date": "2026-09-10",
+          "label": "Arrival",
+          "activities": [
+            { "id": "a1", "time": "3:00 PM", "title": "Check in at hotel", "type": "lodging", "note": "" },
+            { "id": "a2", "time": "Evening", "title": "Sunset picnic by the Seine", "type": "leisure", "note": "Grab wine + cheese near Pont Neuf." },
+            { "id": "a3", "time": "8:30 PM", "title": "Dinner in Le Marais", "type": "dining", "note": "" }
+          ]
+        },
+        {
+          "id": "d2",
+          "date": "2026-09-11",
+          "label": "",
+          "activities": [
+            { "id": "a4", "time": "9:00 AM", "title": "Louvre morning", "type": "sightseeing", "note": "Pre-book timed entry." },
+            { "id": "a5", "time": "1:00 PM", "title": "Lunch in the Tuileries", "type": "dining", "note": "" },
+            { "id": "a6", "time": "7:00 PM", "title": "Eiffel Tower summit", "type": "sightseeing", "note": "Book the summit lift ahead." }
+          ]
+        },
+        {
+          "id": "d3",
+          "date": "2026-09-12",
+          "label": "",
+          "activities": [
+            { "id": "a7", "time": "10:00 AM", "title": "Montmartre wander", "type": "leisure", "note": "" },
+            { "id": "a8", "time": "6:00 PM", "title": "Train to next stop", "type": "transport", "note": "" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "santorini",
+      "name": "Santorini, Greece",
+      "when": "Days 4–6",
+      "lat": 36.3932,
+      "lng": 25.4615,
+      "photo": "",
+      "summary": "White-washed cliffs, blue domes, and the most famous sunset in the world.",
+      "lodging": "Cave suite in Oia",
+      "highlights": [],
+      "notes": "",
+      "days": [
+        {
+          "id": "e1",
+          "date": "2026-09-13",
+          "label": "",
+          "activities": [
+            { "id": "b1", "time": "Afternoon", "title": "Catamaran sunset cruise", "type": "boat", "note": "Includes dinner on board." }
+          ]
+        },
+        {
+          "id": "e2",
+          "date": "2026-09-14",
+          "label": "",
+          "activities": [
+            { "id": "b2", "time": "11:00 AM", "title": "Wine tasting in Megalochori", "type": "winery", "note": "" },
+            { "id": "b3", "time": "8:00 PM", "title": "Cliffside dinner in Oia", "type": "dining", "note": "" }
+          ]
+        }
+      ]
+    }
+  ]
+}
