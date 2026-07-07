@@ -9,133 +9,121 @@
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
+<!-- No cloud SDK needed - JSONBin.io is a plain REST API (fetch calls below) -->
+
 <style>
-  :root{
-    --bg:#fbf7f4; --card:#ffffff; --ink:#3a2e2a; --muted:#8a7a72;
-    --accent:#c46b6b; --accent-dark:#a34f4f; --gold:#c9a24b; --line:#ece0d8;
-    --shadow:0 6px 24px rgba(90,60,50,.10); --radius:16px;
-  }
-  *{box-sizing:border-box}
-  html,body{margin:0;padding:0}
-  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
-    background:var(--bg);color:var(--ink);line-height:1.55;-webkit-font-smoothing:antialiased;}
-  h1,h2,h3{font-family:Georgia,"Times New Roman",serif;font-weight:600;margin:0 0 .3em}
-  a{color:var(--accent-dark);text-decoration:none}
-  img{max-width:100%}
-
-  header{position:sticky;top:0;z-index:1000;background:rgba(251,247,244,.92);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
-  .bar{max-width:1080px;margin:0 auto;padding:12px 20px;display:flex;align-items:center;gap:12px}
-  .brand{font-family:Georgia,serif;font-size:1.15rem;color:var(--accent-dark);cursor:pointer;white-space:nowrap}
-  .brand .heart{color:var(--accent)}
-  .spacer{flex:1}
-  .btn{border:1px solid var(--line);background:var(--card);color:var(--ink);padding:7px 14px;border-radius:999px;cursor:pointer;font-size:.86rem;transition:.15s;white-space:nowrap}
-  .btn:hover{border-color:var(--accent);color:var(--accent-dark)}
-  .btn.primary{background:var(--accent);color:#fff;border-color:var(--accent)}
-  .btn.primary:hover{background:var(--accent-dark)}
-  .btn.ghost{background:transparent;border-color:transparent}
-  .btn.danger{color:#b5453b;border-color:#ecccc8}
-  .btn.small{padding:4px 10px;font-size:.78rem}
-
-  main{max-width:1080px;margin:0 auto;padding:22px 20px 80px}
-  .hero{text-align:center;padding:26px 10px 10px}
-  .hero h1{font-size:2.5rem;line-height:1.1}
-  .hero .sub{color:var(--muted);font-size:1.05rem}
-  .hero .dates{display:inline-block;margin-top:8px;color:var(--gold);letter-spacing:.06em;text-transform:uppercase;font-size:.8rem}
-
-  #map, .leg-map{height:420px;width:100%;border-radius:var(--radius);box-shadow:var(--shadow);margin:18px 0;z-index:1}
-  .leg-map{height:300px}
-
-  .section-title{display:flex;align-items:center;gap:10px;margin:26px 0 6px}
-  .section-title::after{content:"";flex:1;height:1px;background:var(--line)}
-
-  .cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:16px;margin-top:14px}
-  .card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow);cursor:pointer;transition:.18s;display:flex;flex-direction:column}
-  .card:hover{transform:translateY(-3px);border-color:var(--accent)}
-  .card .thumb{height:120px;background:linear-gradient(135deg,#e9c9c0,#d8a7a7);position:relative}
-  .card .thumb img{width:100%;height:100%;object-fit:cover;display:block}
-  .card .num{position:absolute;top:10px;left:10px;background:rgba(255,255,255,.9);color:var(--accent-dark);width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.8rem;font-weight:700}
-  .card .body{padding:14px 16px 16px}
-  .card h3{font-size:1.15rem;margin-bottom:2px}
-  .card .when{color:var(--gold);font-size:.78rem;text-transform:uppercase;letter-spacing:.05em}
-  .card p{color:var(--muted);font-size:.9rem;margin:.5em 0 0}
-
-  .leg-head{display:flex;flex-wrap:wrap;align-items:baseline;gap:12px;margin-top:8px}
-  .leg-head h1{font-size:2.1rem}
-  .leg-head .when{color:var(--gold);text-transform:uppercase;letter-spacing:.05em;font-size:.85rem}
-  .detail-grid{display:grid;grid-template-columns:1.4fr 1fr;gap:24px;margin-top:6px}
-  @media(max-width:760px){.detail-grid{grid-template-columns:1fr}.hero h1{font-size:2rem}}
-  .panel{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:18px 20px;box-shadow:var(--shadow);margin-bottom:16px}
-  .panel h3{color:var(--accent-dark);font-size:1.05rem;border-bottom:1px solid var(--line);padding-bottom:8px;margin-bottom:10px}
-  ul.highlights{margin:6px 0 0;padding-left:18px}
-  ul.highlights li{margin:4px 0}
-  .prose{white-space:pre-wrap}
-
-  /* Legend */
-  .legend{display:flex;flex-wrap:wrap;gap:8px 14px;margin:10px 0 4px}
-  .legend .chip{display:inline-flex;align-items:center;gap:6px;font-size:.82rem;color:var(--muted)}
-  .dot{width:11px;height:11px;border-radius:50%;flex:0 0 auto}
-
-  /* Day-by-day timeline */
-  .day{margin:0 0 18px}
-  .day .dhead{display:flex;align-items:baseline;gap:10px;margin-bottom:8px}
-  .day .dhead .dnum{font-family:Georgia,serif;font-size:1.15rem;color:var(--accent-dark)}
-  .day .dhead .dwk{color:var(--gold);text-transform:uppercase;letter-spacing:.05em;font-size:.76rem}
-  .day .dhead .ddate{color:var(--muted);font-size:.85rem}
-  .acts{border-left:2px solid var(--line);margin-left:6px;padding-left:0}
-  .act{display:flex;gap:12px;padding:9px 0 9px 16px;position:relative}
-  .act::before{content:"";position:absolute;left:-7px;top:15px;width:12px;height:12px;border-radius:50%;background:var(--catcolor,#bbb);border:2px solid var(--bg)}
-  .act .time{min-width:74px;color:var(--muted);font-size:.82rem;padding-top:1px}
-  .act .body2{flex:1}
-  .act .title{font-weight:600}
-  .act .cat{font-size:.72rem;text-transform:uppercase;letter-spacing:.04em;color:var(--catcolor,#999);margin-left:8px}
-  .act .anote{color:var(--muted);font-size:.86rem;margin-top:2px;white-space:pre-wrap}
-  .day-empty{color:var(--muted);font-size:.9rem;padding:6px 0 6px 16px}
-  .act{cursor:pointer;border-radius:8px;transition:background .12s}
-  .act:hover{background:#fdf4ef}
-  .act .caret{display:inline-block;margin-left:8px;color:var(--muted);font-size:.62rem;transition:transform .15s;vertical-align:middle}
-  .act.open .caret{transform:rotate(90deg)}
-  .act-detail{margin:2px 0 12px 16px;padding:12px 14px;background:#fdfaf8;border:1px solid var(--line);border-radius:12px}
-  .act-detail .place{font-weight:600;margin-bottom:2px}
-  .act-detail .dist{display:inline-block;font-size:.76rem;color:var(--accent-dark);background:#f7e9e4;padding:2px 9px;border-radius:999px;margin:4px 0 6px}
-  .act-mini{height:190px;border-radius:10px;margin-top:8px;border:1px solid var(--line)}
-  .local-map{height:340px}
-  .act-loc{margin-top:8px;padding:10px;border:1px dashed var(--line);border-radius:10px;background:#fdfaf8}
-  .act-loc .apick{height:190px;border-radius:10px;border:1px solid var(--line);margin-top:8px}
-
-  .legnav{display:flex;justify-content:space-between;gap:12px;margin-top:24px}
-  .legnav .btn{flex:1;text-align:center}
-
-  /* Editor */
-  .edit-banner{background:#fff4ec;border:1px dashed var(--gold);border-radius:12px;padding:10px 14px;margin:14px 0;color:#8a6a2e;font-size:.9rem}
-  label.form{display:block;margin:0 0 12px}
-  label.form .lab{display:block;font-size:.78rem;color:var(--muted);margin-bottom:4px;text-transform:uppercase;letter-spacing:.05em}
-  input,textarea,select{width:100%;font:inherit;color:var(--ink);background:#fff;border:1px solid var(--line);border-radius:10px;padding:9px 11px}
-  input:focus,textarea:focus,select:focus{outline:none;border-color:var(--accent)}
-  textarea{resize:vertical;min-height:70px}
-  input[type=color]{padding:2px;height:38px;width:52px}
-  .row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-  .row3{display:grid;grid-template-columns:100px 1fr 150px;gap:10px;align-items:end}
-  @media(max-width:640px){.row3{grid-template-columns:1fr 1fr}}
-  .leg-editor{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:18px 20px;margin-bottom:16px;box-shadow:var(--shadow)}
-  .leg-editor .eh{display:flex;align-items:center;gap:10px;margin-bottom:12px}
-  .leg-editor .eh h3{flex:1;margin:0}
-  .coordhelp{font-size:.8rem;color:var(--muted);margin:-4px 0 8px}
-  .pickmap{height:220px;border-radius:12px;margin:6px 0 12px;border:1px solid var(--line)}
-  .day-edit{border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin:0 0 12px;background:#fdfaf8}
-  .day-edit .dh{display:flex;align-items:center;gap:8px;margin-bottom:8px}
-  .day-edit .dh .wk{color:var(--gold);font-size:.76rem;text-transform:uppercase;letter-spacing:.05em;white-space:nowrap}
-  .act-edit{display:flex;gap:8px;align-items:flex-start;margin:0 0 8px}
-  .act-edit .grip{color:var(--catcolor,#bbb);padding-top:10px;font-size:1.1rem;line-height:1}
-  .act-fields{flex:1;display:grid;grid-template-columns:90px 1fr 140px;gap:8px}
-  @media(max-width:640px){.act-fields{grid-template-columns:1fr 1fr}}
-  .cat-row{display:flex;align-items:center;gap:8px;margin:0 0 8px}
-  .cat-row input[type=text]{flex:1}
-  .catswatch{width:16px;height:16px;border-radius:50%;flex:0 0 auto}
-  .hidden{display:none!important}
-  .mini{font-size:.8rem;color:var(--muted)}
-  footer{max-width:1080px;margin:0 auto;padding:20px;color:var(--muted);font-size:.8rem;text-align:center}
-  .toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;padding:10px 18px;border-radius:999px;font-size:.88rem;opacity:0;transition:.3s;pointer-events:none;z-index:2000}
-  .toast.show{opacity:1}
+:root{
+  --bg:#fbf7f4; --card:#ffffff; --ink:#3a2e2a; --muted:#8a7a72;
+  --accent:#c46b6b; --accent-dark:#a34f4f; --gold:#c9a24b; --line:#ece0d8;
+  --shadow:0 6px 24px rgba(90,60,50,.10); --radius:16px;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  background:var(--bg);color:var(--ink);line-height:1.55;-webkit-font-smoothing:antialiased;}
+h1,h2,h3{font-family:Georgia,"Times New Roman",serif;font-weight:600;margin:0 0 .3em}
+a{color:var(--accent-dark);text-decoration:none}
+img{max-width:100%}
+header{position:sticky;top:0;z-index:1000;background:rgba(251,247,244,.92);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+.bar{max-width:1080px;margin:0 auto;padding:12px 20px;display:flex;align-items:center;gap:12px}
+.brand{font-family:Georgia,serif;font-size:1.15rem;color:var(--accent-dark);cursor:pointer;white-space:nowrap}
+.brand .heart{color:var(--accent)}
+.spacer{flex:1}
+.btn{border:1px solid var(--line);background:var(--card);color:var(--ink);padding:7px 14px;border-radius:999px;cursor:pointer;font-size:.86rem;transition:.15s;white-space:nowrap}
+.btn:hover{border-color:var(--accent);color:var(--accent-dark)}
+.btn.primary{background:var(--accent);color:#fff;border-color:var(--accent)}
+.btn.primary:hover{background:var(--accent-dark)}
+.btn.ghost{background:transparent;border-color:transparent}
+.btn.danger{color:#b5453b;border-color:#ecccc8}
+.btn.small{padding:4px 10px;font-size:.78rem}
+main{max-width:1080px;margin:0 auto;padding:22px 20px 80px}
+.hero{text-align:center;padding:26px 10px 10px}
+.hero h1{font-size:2.5rem;line-height:1.1}
+.hero .sub{color:var(--muted);font-size:1.05rem}
+.hero .dates{display:inline-block;margin-top:8px;color:var(--gold);letter-spacing:.06em;text-transform:uppercase;font-size:.8rem}
+#map, .leg-map{height:420px;width:100%;border-radius:var(--radius);box-shadow:var(--shadow);margin:18px 0;z-index:1}
+.leg-map{height:300px}
+.section-title{display:flex;align-items:center;gap:10px;margin:26px 0 6px}
+.section-title::after{content:"";flex:1;height:1px;background:var(--line)}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:16px;margin-top:14px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow);cursor:pointer;transition:.18s;display:flex;flex-direction:column}
+.card:hover{transform:translateY(-3px);border-color:var(--accent)}
+.card .thumb{height:120px;background:linear-gradient(135deg,#e9c9c0,#d8a7a7);position:relative}
+.card .thumb img{width:100%;height:100%;object-fit:cover;display:block}
+.card .num{position:absolute;top:10px;left:10px;background:rgba(255,255,255,.9);color:var(--accent-dark);width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.8rem;font-weight:700}
+.card .body{padding:14px 16px 16px}
+.card h3{font-size:1.15rem;margin-bottom:2px}
+.card .when{color:var(--gold);font-size:.78rem;text-transform:uppercase;letter-spacing:.05em}
+.card p{color:var(--muted);font-size:.9rem;margin:.5em 0 0}
+.leg-head{display:flex;flex-wrap:wrap;align-items:baseline;gap:12px;margin-top:8px}
+.leg-head h1{font-size:2.1rem}
+.leg-head .when{color:var(--gold);text-transform:uppercase;letter-spacing:.05em;font-size:.85rem}
+.detail-grid{display:grid;grid-template-columns:1.4fr 1fr;gap:24px;margin-top:6px}
+@media(max-width:760px){.detail-grid{grid-template-columns:1fr}.hero h1{font-size:2rem}}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:18px 20px;box-shadow:var(--shadow);margin-bottom:16px}
+.panel h3{color:var(--accent-dark);font-size:1.05rem;border-bottom:1px solid var(--line);padding-bottom:8px;margin-bottom:10px}
+ul.highlights{margin:6px 0 0;padding-left:18px}
+ul.highlights li{margin:4px 0}
+.prose{white-space:pre-wrap}
+.legend{display:flex;flex-wrap:wrap;gap:8px 14px;margin:10px 0 4px}
+.legend .chip{display:inline-flex;align-items:center;gap:6px;font-size:.82rem;color:var(--muted)}
+.dot{width:11px;height:11px;border-radius:50%;flex:0 0 auto}
+.day{margin:0 0 18px}
+.day .dhead{display:flex;align-items:baseline;gap:10px;margin-bottom:8px}
+.day .dhead .dnum{font-family:Georgia,serif;font-size:1.15rem;color:var(--accent-dark)}
+.day .dhead .dwk{color:var(--gold);text-transform:uppercase;letter-spacing:.05em;font-size:.76rem}
+.day .dhead .ddate{color:var(--muted);font-size:.85rem}
+.acts{border-left:2px solid var(--line);margin-left:6px;padding-left:0}
+.act{display:flex;gap:12px;padding:9px 0 9px 16px;position:relative;cursor:pointer;border-radius:8px;transition:background .12s}
+.act:hover{background:#fdf4ef}
+.act::before{content:"";position:absolute;left:-7px;top:15px;width:12px;height:12px;border-radius:50%;background:var(--catcolor,#bbb);border:2px solid var(--bg)}
+.act .time{min-width:74px;color:var(--muted);font-size:.82rem;padding-top:1px}
+.act .body2{flex:1}
+.act .title{font-weight:600}
+.act .cat{font-size:.72rem;text-transform:uppercase;letter-spacing:.04em;color:var(--catcolor,#999);margin-left:8px}
+.act .caret{display:inline-block;margin-left:8px;color:var(--muted);font-size:.62rem;transition:transform .15s;vertical-align:middle}
+.act.open .caret{transform:rotate(90deg)}
+.act-detail{margin:2px 0 12px 16px;padding:12px 14px;background:#fdfaf8;border:1px solid var(--line);border-radius:12px}
+.act-detail .place{font-weight:600;margin-bottom:2px}
+.act-detail .dist{display:inline-block;font-size:.76rem;color:var(--accent-dark);background:#f7e9e4;padding:2px 9px;border-radius:999px;margin:4px 0 6px}
+.act-mini{height:190px;border-radius:10px;margin-top:8px;border:1px solid var(--line)}
+.local-map{height:340px}
+.act-loc{margin-top:8px;padding:10px;border:1px dashed var(--line);border-radius:10px;background:#fdfaf8}
+.act-loc .apick{height:190px;border-radius:10px;border:1px solid var(--line);margin-top:8px}
+.day-empty{color:var(--muted);font-size:.9rem;padding:6px 0 6px 16px}
+.legnav{display:flex;justify-content:space-between;gap:12px;margin-top:24px}
+.legnav .btn{flex:1;text-align:center}
+.edit-banner{background:#fff4ec;border:1px dashed var(--gold);border-radius:12px;padding:10px 14px;margin:14px 0;color:#8a6a2e;font-size:.9rem}
+.cloud-status{font-size:.78rem;color:var(--muted);display:flex;align-items:center;gap:6px}
+.cloud-dot{width:8px;height:8px;border-radius:50%;background:#bbb}
+.cloud-dot.ok{background:#3fa66a}
+.cloud-dot.err{background:#c0562e}
+label.form{display:block;margin:0 0 12px}
+label.form .lab{display:block;font-size:.78rem;color:var(--muted);margin-bottom:4px;text-transform:uppercase;letter-spacing:.05em}
+input,textarea,select{width:100%;font:inherit;color:var(--ink);background:#fff;border:1px solid var(--line);border-radius:10px;padding:9px 11px}
+input:focus,textarea:focus,select:focus{outline:none;border-color:var(--accent)}
+textarea{resize:vertical;min-height:70px}
+input[type=color]{padding:2px;height:38px;width:52px}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.leg-editor{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:18px 20px;margin-bottom:16px;box-shadow:var(--shadow)}
+.leg-editor .eh{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.leg-editor .eh h3{flex:1;margin:0}
+.coordhelp{font-size:.8rem;color:var(--muted);margin:-4px 0 8px}
+.pickmap{height:220px;border-radius:12px;margin:6px 0 12px;border:1px solid var(--line)}
+.day-edit{border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin:0 0 12px;background:#fdfaf8}
+.day-edit .dh{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.day-edit .dh .wk{color:var(--gold);font-size:.76rem;text-transform:uppercase;letter-spacing:.05em;white-space:nowrap}
+.act-edit{display:flex;gap:8px;align-items:flex-start;margin:0 0 8px}
+.act-edit .grip{color:var(--catcolor,#bbb);padding-top:10px;font-size:1.1rem;line-height:1}
+.act-fields{flex:1;display:grid;grid-template-columns:90px 1fr 140px;gap:8px}
+@media(max-width:640px){.act-fields{grid-template-columns:1fr 1fr}}
+.cat-row{display:flex;align-items:center;gap:8px;margin:0 0 8px}
+.cat-row input[type=text]{flex:1}
+.hidden{display:none!important}
+.mini{font-size:.8rem;color:var(--muted)}
+footer{max-width:1080px;margin:0 auto;padding:20px;color:var(--muted);font-size:.8rem;text-align:center}
+.toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;padding:10px 18px;border-radius:999px;font-size:.88rem;opacity:0;transition:.3s;pointer-events:none;z-index:2000}
+.toast.show{opacity:1}
 </style>
 </head>
 <body>
@@ -143,39 +131,67 @@
   <div class="bar">
     <div class="brand" onclick="go('')"><span class="heart">&#10084;</span> <span id="brandTitle">Our Honeymoon</span></div>
     <div class="spacer"></div>
+    <span class="cloud-status" title="Where your edits are stored"><span class="cloud-dot" id="cloudDot"></span><span id="cloudLabel">…</span></span>
     <button class="btn ghost" id="editToggle" onclick="toggleEdit()">Edit</button>
     <button class="btn ghost small" onclick="doImport()">Import</button>
     <button class="btn ghost small" onclick="doExport()">Export</button>
   </div>
 </header>
-
 <main id="app"></main>
-
 <footer>
-  Made with love &middot; runs on GitHub Pages, no account needed &middot;
-  <a href="#" onclick="resetData();return false;">reset to saved file</a>
+  Made with love &middot; synced via JSONBin &middot;
+  <a href="#" onclick="resetData();return false;">reset to default trip</a>
 </footer>
-
 <div class="toast" id="toast"></div>
 <input type="file" id="fileInput" accept="application/json" class="hidden" />
 
 <script>
-/* ------------------------------------------------------------------
-   DATA: loads ./data.json when hosted. Your edits save in this browser
-   (localStorage). Export downloads data.json to commit + share.
--------------------------------------------------------------------*/
+/* ==================================================================
+   CLOUD SYNC SETUP  (JSONBin.io - free, dead simple)
+
+   Your itinerary lives in a "bin" (a JSON blob at a URL) on JSONBin.
+   Both partners' browsers read/write to the same bin. To wire it up:
+
+   1. Go to https://jsonbin.io and sign up (email or Google, ~30 seconds).
+   2. Click "Create Bin". A JSON editor opens - just paste  {}  and hit Save.
+   3. Copy the "Bin ID" (in the URL after /b/, looks like 65abc123def45678).
+   4. Click "API Keys" in the sidebar, copy the "X-MASTER-KEY".
+   5. Paste both values below, replacing YOUR_BIN_ID and YOUR_MASTER_KEY.
+
+   That's it - no rules, no config file, no CDN scripts.
+   If you skip this, the site still works, but only saves to your own
+   browser (same as before). Change nothing else.
+   ================================================================== */
+const JSONBIN_ID  = "6a4c6589f5f4af5e296a1d4d";
+const JSONBIN_KEY = "$2a$10$sqn6debCZo0I2yuWkAd9P.1hTv1arIiZhNowqeHkibfN4KsH18Ei.";
+
+const isCloudConfigured =
+  JSONBIN_ID  && !JSONBIN_ID.startsWith("YOUR_") &&
+  JSONBIN_KEY && !JSONBIN_KEY.startsWith("YOUR_");
+
+const BIN_URL = "https://api.jsonbin.io/v3/b/" + JSONBIN_ID;
+const BIN_HEADERS = {
+  "Content-Type": "application/json",
+  "X-Master-Key": JSONBIN_KEY
+};
+
+function setCloudStatus(state, label){
+  const dot=document.getElementById("cloudDot"), lab=document.getElementById("cloudLabel");
+  if(!dot) return;
+  dot.className="cloud-dot "+(state||"");
+  if(lab) lab.textContent=label||"";
+}
+
 const LS_KEY = "honeymoon_data_v2";
-
 const DEFAULT_CATEGORIES = [
-  {id:"transport",   label:"Transportation", color:"#2f6fb0"},
-  {id:"dining",      label:"Dining",         color:"#c0562e"},
-  {id:"boat",        label:"Boat outing",    color:"#1d9e75"},
-  {id:"winery",      label:"Winery",         color:"#8e3b63"},
-  {id:"sightseeing", label:"Sightseeing",    color:"#b8811a"},
-  {id:"lodging",     label:"Lodging",        color:"#6b6b6b"},
-  {id:"leisure",     label:"Free time",      color:"#4f8a3d"}
+  {id:"transport", label:"Transportation", color:"#2f6fb0"},
+  {id:"dining", label:"Dining", color:"#c0562e"},
+  {id:"boat", label:"Boat outing", color:"#1d9e75"},
+  {id:"winery", label:"Winery", color:"#8e3b63"},
+  {id:"sightseeing", label:"Sightseeing", color:"#b8811a"},
+  {id:"lodging", label:"Lodging", color:"#6b6b6b"},
+  {id:"leisure", label:"Free time", color:"#4f8a3d"}
 ];
-
 const DEFAULT_DATA = {
   trip:{ title:"Our Honeymoon", subtitle:"", dates:"Autumn 2026" },
   categories: DEFAULT_CATEGORIES.map(c=>({...c})),
@@ -185,37 +201,14 @@ const DEFAULT_DATA = {
       lat:48.8566, lng:2.3522, photo:"",
       summary:"Where it all begins — croissants, the Seine at dusk, and a kiss under the Eiffel Tower.",
       lodging:"Hôtel des Amoureux, Le Marais", highlights:[], notes:"",
-      days:[
-        {id:"d1", date:"2026-09-10", label:"Arrival", activities:[
-          {id:"a1", time:"3:00 PM", title:"Check in at hotel", type:"lodging", note:"", place:"Hôtel des Amoureux, Le Marais", lat:48.8566, lng:2.3522},
-          {id:"a2", time:"Evening", title:"Sunset picnic by the Seine", type:"leisure", note:"Grab wine + cheese near Pont Neuf.", place:"Pont Neuf", lat:48.8570, lng:2.3410},
-          {id:"a3", time:"8:30 PM", title:"Dinner in Le Marais", type:"dining", note:"Reservation under our name at 8:30.", place:"Le Marais", lat:48.8590, lng:2.3620}
-        ]},
-        {id:"d2", date:"2026-09-11", label:"", activities:[
-          {id:"a4", time:"9:00 AM", title:"Louvre morning", type:"sightseeing", note:"Pre-book timed entry.", place:"Musée du Louvre", lat:48.8606, lng:2.3376},
-          {id:"a5", time:"1:00 PM", title:"Lunch in the Tuileries", type:"dining", note:"", place:"Jardin des Tuileries", lat:48.8635, lng:2.3275},
-          {id:"a6", time:"7:00 PM", title:"Eiffel Tower summit", type:"sightseeing", note:"Book the summit lift ahead.", place:"Eiffel Tower", lat:48.8584, lng:2.2945}
-        ]},
-        {id:"d3", date:"2026-09-12", label:"", activities:[
-          {id:"a7", time:"10:00 AM", title:"Montmartre wander", type:"leisure", note:"", place:"", lat:null, lng:null},
-          {id:"a8", time:"6:00 PM", title:"Train to next stop", type:"transport", note:"", place:"Gare de Lyon", lat:48.8443, lng:2.3743}
-        ]}
-      ]
+      days:[]
     },
     {
       id:"santorini", name:"Santorini, Greece", when:"Days 4–6",
       lat:36.3932, lng:25.4615, photo:"",
       summary:"White-washed cliffs, blue domes, and the most famous sunset in the world.",
       lodging:"Cave suite in Oia", highlights:[], notes:"",
-      days:[
-        {id:"e1", date:"2026-09-13", label:"", activities:[
-          {id:"b1", time:"Afternoon", title:"Catamaran sunset cruise", type:"boat", note:"Includes dinner on board.", place:"Ammoudi Bay", lat:36.4640, lng:25.3680}
-        ]},
-        {id:"e2", date:"2026-09-14", label:"", activities:[
-          {id:"b2", time:"11:00 AM", title:"Wine tasting in Megalochori", type:"winery", note:"", place:"Megalochori village", lat:36.3855, lng:25.4400},
-          {id:"b3", time:"8:00 PM", title:"Cliffside dinner in Oia", type:"dining", note:"", place:"Oia", lat:36.4618, lng:25.3753}
-        ]}
-      ]
+      days:[]
     }
   ]
 };
@@ -255,21 +248,139 @@ function normalize(d){
   return d;
 }
 
-async function loadData(){
-  const saved = localStorage.getItem(LS_KEY);
-  if(saved){ try{ DATA = normalize(JSON.parse(saved)); return; }catch(e){} }
+/* ---------------- LOAD / SAVE (JSONBin-first, localStorage cache) ---------------- */
+async function tryFetchSeedJson(){
   try{
     const r = await fetch("data.json", {cache:"no-store"});
-    if(r.ok){ DATA = normalize(await r.json()); return; }
+    if(r.ok) return normalize(await r.json());
   }catch(e){}
-  DATA = normalize(JSON.parse(JSON.stringify(DEFAULT_DATA)));
+  return null;
 }
 
-function save(){ localStorage.setItem(LS_KEY, JSON.stringify(DATA)); }
+async function fetchFromCloud(){
+  const r = await fetch(BIN_URL + "/latest", {headers: BIN_HEADERS, cache: "no-store"});
+  if(!r.ok) throw new Error("JSONBin GET failed: " + r.status);
+  const j = await r.json();
+  // JSONBin wraps our data in {record: ..., metadata: ...}
+  return j.record;
+}
+
+async function writeToCloud(data){
+  const r = await fetch(BIN_URL, {
+    method: "PUT",
+    headers: BIN_HEADERS,
+    body: JSON.stringify(data)
+  });
+  if(!r.ok) throw new Error("JSONBin PUT failed: " + r.status);
+}
+
+async function loadData(){
+  if(!isCloudConfigured){
+    setCloudStatus("","local only");
+    const saved = localStorage.getItem(LS_KEY);
+    if(saved){ try{ DATA = normalize(JSON.parse(saved)); return; }catch(e){} }
+    const seed = await tryFetchSeedJson();
+    DATA = seed || normalize(JSON.parse(JSON.stringify(DEFAULT_DATA)));
+    return;
+  }
+  setCloudStatus("","connecting…");
+  try{
+    const cloud = await fetchFromCloud();
+    // A brand new bin might contain `{}` - if it doesn't look like our shape, seed it.
+    if(cloud && cloud.trip && Array.isArray(cloud.legs)){
+      DATA = normalize(cloud);
+      localStorage.setItem(LS_KEY, JSON.stringify(DATA));
+      setCloudStatus("ok","synced");
+      startBackgroundRefresh();
+      return;
+    }
+    // Bin is empty (freshly created) - seed it from local edits, data.json, or defaults.
+    const saved = localStorage.getItem(LS_KEY);
+    let seed = null;
+    if(saved){ try{ seed = normalize(JSON.parse(saved)); }catch(e){} }
+    if(!seed) seed = await tryFetchSeedJson();
+    DATA = seed || normalize(JSON.parse(JSON.stringify(DEFAULT_DATA)));
+    localStorage.setItem(LS_KEY, JSON.stringify(DATA));
+    try{
+      await writeToCloud(DATA);
+      setCloudStatus("ok","synced");
+    }catch(e){
+      console.error("Could not seed cloud bin.", e);
+      setCloudStatus("err","offline");
+    }
+    startBackgroundRefresh();
+    return;
+  }catch(e){
+    console.error("Could not reach JSONBin, using offline data.", e);
+    setCloudStatus("err","offline");
+  }
+  // Cloud unreachable - use whatever local data we have.
+  const saved = localStorage.getItem(LS_KEY);
+  if(saved){ try{ DATA = normalize(JSON.parse(saved)); startBackgroundRefresh(); return; }catch(e){} }
+  const seed = await tryFetchSeedJson();
+  DATA = seed || normalize(JSON.parse(JSON.stringify(DEFAULT_DATA)));
+  startBackgroundRefresh();
+}
+
+let saveTimer=null;
+async function doCloudSave(){
+  try{
+    await writeToCloud(DATA);
+    setCloudStatus("ok","synced");
+  }catch(e){
+    console.error("Cloud save failed", e);
+    setCloudStatus("err","save failed - check connection");
+  }
+}
+function flushPendingSave(){
+  if(!isCloudConfigured || !saveTimer) return;
+  clearTimeout(saveTimer); saveTimer=null;
+  doCloudSave();
+}
+function save(){
+  localStorage.setItem(LS_KEY, JSON.stringify(DATA));
+  if(!isCloudConfigured) return;
+  clearTimeout(saveTimer);
+  setCloudStatus("","saving…");
+  // Longer debounce - JSONBin free tier has a monthly request cap,
+  // and there's no realtime channel anyway, so no rush.
+  saveTimer = setTimeout(()=>{ saveTimer=null; doCloudSave(); }, 1200);
+}
+// Flush pending save if tab closes/backgrounds, so the last edit isn't lost.
+window.addEventListener("beforeunload", flushPendingSave);
+document.addEventListener("visibilitychange", ()=>{ if(document.visibilityState==="hidden") flushPendingSave(); });
+
+// JSONBin doesn't push realtime updates, so instead we pull-refresh whenever
+// the user comes back to the tab or window. Natural "give me the latest" moment.
+async function pullRefresh(){
+  if(!isCloudConfigured) return;
+  if(EDIT) return; // don't clobber in-progress edits
+  if(saveTimer) return; // there's an outbound save queued; skip
+  try{
+    const cloud = await fetchFromCloud();
+    if(!cloud || !cloud.trip) return;
+    const incoming = JSON.stringify(normalize(cloud));
+    const current = JSON.stringify(DATA);
+    if(incoming === current) return; // no change
+    DATA = normalize(cloud);
+    localStorage.setItem(LS_KEY, JSON.stringify(DATA));
+    setCloudStatus("ok","synced");
+    render();
+  }catch(e){
+    console.error("Refresh failed", e);
+    setCloudStatus("err","offline");
+  }
+}
+function startBackgroundRefresh(){
+  window.addEventListener("focus", pullRefresh);
+  document.addEventListener("visibilitychange", ()=>{ if(document.visibilityState==="visible") pullRefresh(); });
+}
 
 function resetData(){
-  if(!confirm("Discard edits saved in this browser and reload the trip from data.json?")) return;
-  localStorage.removeItem(LS_KEY); location.hash=""; location.reload();
+  if(!confirm("Discard all edits and reload the default starter trip?")) return;
+  DATA = normalize(JSON.parse(JSON.stringify(DEFAULT_DATA)));
+  save();
+  location.hash=""; render();
 }
 
 /* ---------------- ROUTING ---------------- */
@@ -290,17 +401,13 @@ function uid(){return "x"+Math.random().toString(36).slice(2,9);}
 function cat(id){return DATA.categories.find(c=>c.id===id) || {id:id,label:id||"—",color:"#bbb"};}
 function catColor(id){return cat(id).color;}
 function catLabel(id){return cat(id).label;}
-
 function dayInfo(dateStr){
   if(!dateStr) return null;
   const p = String(dateStr).split("-");
   if(p.length!==3) return null;
   const dt = new Date(+p[0], +p[1]-1, +p[2]);
   if(isNaN(dt.getTime())) return null;
-  return {
-    weekday: dt.toLocaleDateString(undefined,{weekday:"long"}),
-    nice: dt.toLocaleDateString(undefined,{month:"long",day:"numeric",year:"numeric"})
-  };
+  return { weekday: dt.toLocaleDateString(undefined,{weekday:"long"}), nice: dt.toLocaleDateString(undefined,{month:"long",day:"numeric",year:"numeric"}) };
 }
 function addDays(dateStr, n){
   const p = String(dateStr).split("-");
@@ -324,10 +431,6 @@ function distanceText(la1,lo1,la2,lo2){
   if(mi<0.1) return Math.round(mi*5280)+" ft";
   return mi.toFixed(mi<10?1:0)+" mi";
 }
-
-/* Parse a free-text time into minutes-since-midnight, or null if unknown.
-   Handles "8:30 AM", "12:50PM", "7:00AM", "14:00", "8 pm", and words like
-   "morning", "noon", "afternoon", "evening", "night". */
 function parseTimeMinutes(str){
   if(str==null) return null;
   const s=String(str).trim().toLowerCase();
@@ -341,17 +444,12 @@ function parseTimeMinutes(str){
       return h*60+min;
     }
   }
-  // Order matters: check specific words before ones they contain as substrings
-  // (e.g. "afternoon" contains "noon", "midnight" contains "night").
   const kw=[["midnight",0],["afternoon",14*60],["morning",9*60],["midday",12*60],
     ["noon",12*60],["lunch",12*60+30],["dawn",6*60],["sunrise",6*60],
     ["evening",18*60],["sunset",19*60],["dinner",19*60],["tonight",20*60],["night",21*60]];
   for(const [k,v] of kw){ if(s.indexOf(k)>-1) return v; }
   return null;
 }
-
-/* Return a day's activities sorted by time (stable; unknown times sort last).
-   Non-mutating — used for display. */
 function sortedActivities(day){
   const arr=(day.activities||[]).map((a,i)=>[a,i]);
   arr.sort((x,y)=>{
@@ -364,33 +462,23 @@ function sortedActivities(day){
   });
   return arr.map(p=>p[0]);
 }
-
-/* Reorder the day's activities in place, chronologically. */
-function sortDayActivities(day){
-  if(!day) return;
-  day.activities = sortedActivities(day);
-}
+function sortDayActivities(day){ if(!day) return; day.activities = sortedActivities(day); }
 
 /* ---------------- RENDER ---------------- */
 let maps = [];
 let CURRENT_LEG = null;
 function clearMaps(){ maps.forEach(m=>{try{m.remove();}catch(e){}}); maps=[]; }
-
 function render(){
   clearMaps();
   document.getElementById("brandTitle").textContent = DATA.trip.title || "Our Honeymoon";
   document.getElementById("editToggle").textContent = EDIT ? "Done editing" : "Edit";
   document.getElementById("editToggle").className = "btn " + (EDIT?"primary":"ghost");
   const route = currentRoute();
-  if(route.view==="leg" && legIndex(route.id)>=0){
-    EDIT ? renderLegEdit(route.id) : renderLeg(route.id);
-  } else {
-    EDIT ? renderHomeEdit() : renderHome();
-  }
+  if(route.view==="leg" && legIndex(route.id)>=0){ EDIT ? renderLegEdit(route.id) : renderLeg(route.id); }
+  else { EDIT ? renderHomeEdit() : renderHome(); }
   window.scrollTo(0,0);
 }
 
-/* ----- HOME (view) ----- */
 function renderHome(){
   const app = document.getElementById("app");
   app.innerHTML = `
@@ -439,7 +527,6 @@ function drawOverviewMap(){
   } else { map.setView(latlngs[0],6); }
 }
 
-/* ----- LEG (view) ----- */
 function renderLeg(id){
   const i=legIndex(id), l=DATA.legs[i];
   CURRENT_LEG = l;
@@ -448,10 +535,7 @@ function renderLeg(id){
   const pinned = collectPinned(l);
   const showLocal = hasLoc(l) || pinned.length>0;
   app.innerHTML=`
-    <div class="leg-head">
-      <h1>${esc(l.name)}</h1>
-      <div class="when">${esc(l.when||"")}</div>
-    </div>
+    <div class="leg-head"><h1>${esc(l.name)}</h1><div class="when">${esc(l.when||"")}</div></div>
     <p class="sub" style="color:var(--muted);max-width:640px">${esc(l.summary||"")}</p>
     <div class="detail-grid">
       <div>
@@ -489,12 +573,9 @@ function renderLeg(id){
   if(document.getElementById("localmap")) initLocalMap(l);
 }
 
-/* Collect activities that have coordinates, with day index for labels */
 function collectPinned(l){
   const out=[];
-  (l.days||[]).forEach((d,di)=>(d.activities||[]).forEach(a=>{
-    if(hasLoc(a)) out.push({a, dayNum:di+1});
-  }));
+  (l.days||[]).forEach((d,di)=>(d.activities||[]).forEach(a=>{ if(hasLoc(a)) out.push({a, dayNum:di+1}); }));
   return out;
 }
 
@@ -503,10 +584,7 @@ function initLocalMap(l){
   const map=L.map(el,{scrollWheelZoom:false}); maps.push(map);
   L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{attribution:"&copy; OpenStreetMap",maxZoom:19}).addTo(map);
   const pts=[];
-  if(hasLoc(l)){
-    L.marker([l.lat,l.lng]).addTo(map).bindPopup("<b>🏨 "+esc(l.lodging||l.name||"Hotel")+"</b>");
-    pts.push([l.lat,l.lng]);
-  }
+  if(hasLoc(l)){ L.marker([l.lat,l.lng]).addTo(map).bindPopup("<b>🏨 "+esc(l.lodging||l.name||"Hotel")+"</b>"); pts.push([l.lat,l.lng]); }
   collectPinned(l).forEach(({a,dayNum})=>{
     const d = hasLoc(l) ? " · ~"+distanceText(l.lat,l.lng,a.lat,a.lng)+" from hotel" : "";
     L.circleMarker([a.lat,a.lng],{radius:9,color:"#fff",weight:2,fillColor:catColor(a.type),fillOpacity:1}).addTo(map)
@@ -519,7 +597,6 @@ function initLocalMap(l){
   setTimeout(()=>{try{map.invalidateSize();}catch(e){}},60);
 }
 
-/* Expand/collapse an activity's details in the timeline */
 function toggleAct(dayId, actId){
   const det=document.getElementById("det-"+dayId+"-"+actId);
   const actEl=document.getElementById("act-"+dayId+"-"+actId);
@@ -547,9 +624,7 @@ function buildActDetail(det, dayId, actId){
     ${a.place?`<div class="place">${esc(a.place)}</div>`:""}
     ${dist?`<div class="dist">~${esc(dist)} from hotel</div>`:""}
     <div class="anote">${a.note?esc(a.note):'<span class="mini">No notes yet — add some in Edit mode.</span>'}</div>
-    ${activityHasLoc
-      ? `<div class="act-mini" id="${mapId}"></div>`
-      : `<div class="mini" style="margin-top:6px">No location pinned yet. Add one in Edit → this activity → “Pin on map”.</div>`}
+    ${activityHasLoc ? `<div class="act-mini" id="${mapId}"></div>` : `<div class="mini" style="margin-top:6px">No location pinned yet. Add one in Edit → this activity → "Pin on map".</div>`}
   `;
   if(activityHasLoc) setTimeout(()=>initActMiniMap(mapId, l, a), 0);
 }
@@ -591,12 +666,10 @@ function timelineHTML(l){
           if(hasLoc(a)) marks.push('<i title="mapped">📍</i>');
           const meta = marks.length?` <span class="mini">${marks.join(" ")}</span>`:"";
           return `<div class="act" id="act-${aid}" style="--catcolor:${esc(col)}" onclick="toggleAct('${day.id}','${a.id}')">
-            <div class="time">${esc(a.time||"")}</div>
-            <div class="body2">
-              <span class="title">${esc(a.title||"Untitled")}</span><span class="cat">${esc(catLabel(a.type))}</span>${meta}<span class="caret">▶</span>
+              <div class="time">${esc(a.time||"")}</div>
+              <div class="body2"><span class="title">${esc(a.title||"Untitled")}</span><span class="cat">${esc(catLabel(a.type))}</span>${meta}<span class="caret">▶</span></div>
             </div>
-          </div>
-          <div class="act-detail hidden" id="det-${aid}"></div>`;
+            <div class="act-detail hidden" id="det-${aid}"></div>`;
         }).join("")}</div>`
       : `<div class="day-empty">No activities yet.</div>`;
     return `<div class="day">${head}${acts}</div>`;
@@ -606,11 +679,10 @@ function timelineHTML(l){
 /* ---------------- EDIT MODE ---------------- */
 function toggleEdit(){ EDIT=!EDIT; render(); }
 
-/* ----- HOME EDIT: trip meta, categories, leg list ----- */
 function renderHomeEdit(){
   const app=document.getElementById("app");
   app.innerHTML=`
-    <div class="edit-banner">✎ Editing. Changes save automatically in this browser. When you're happy, click <b>Export</b> and commit <code>data.json</code> so your partner sees it too.</div>
+    <div class="edit-banner">✎ Editing. Changes save to the cloud automatically — your partner will see them next time they open or refocus the page.</div>
     <div class="panel">
       <h3>Trip details</h3>
       <label class="form"><span class="lab">Title</span><input id="t_title" value="${esc(DATA.trip.title)}"></label>
@@ -619,7 +691,7 @@ function renderHomeEdit(){
     </div>
     <div class="panel">
       <h3>Activity colors</h3>
-      <div class="mini" style="margin-bottom:10px">These color-code every activity (transportation, dining, boat outings, wineries…). Rename them, recolor them, or add your own.</div>
+      <div class="mini" style="margin-bottom:10px">These color-code every activity. Rename them, recolor them, or add your own.</div>
       <div id="catList"></div>
       <button class="btn small" onclick="addCategory()">+ Add category</button>
     </div>
@@ -647,9 +719,9 @@ function renderCatList(){
     const row=document.createElement("div");
     row.className="cat-row";
     row.innerHTML=`
-      <input type="color" value="${esc(c.color)}" data-i="${i}" class="cat-color">
-      <input type="text" value="${esc(c.label)}" data-i="${i}" class="cat-label">
-      <button class="btn small danger" data-i="${i}" ${DATA.categories.length<=1?"disabled style=opacity:.3":""}>Remove</button>`;
+      <input type="color" value="${esc(c.color)}" class="cat-color">
+      <input type="text" value="${esc(c.label)}" class="cat-label">
+      <button class="btn small danger" ${DATA.categories.length<=1?"disabled style=opacity:.3":""}>Remove</button>`;
     row.querySelector(".cat-color").addEventListener("input",e=>{DATA.categories[i].color=e.target.value;save();});
     row.querySelector(".cat-label").addEventListener("input",e=>{DATA.categories[i].label=e.target.value;save();});
     const del=row.querySelector(".btn.danger");
@@ -657,12 +729,12 @@ function renderCatList(){
     box.appendChild(row);
   });
 }
-function addCategory(){
-  DATA.categories.push({id:uid(),label:"New type",color:"#c46b6b"}); save(); renderCatList();
-}
+
+function addCategory(){ DATA.categories.push({id:uid(),label:"New type",color:"#c46b6b"}); save(); renderCatList(); }
+
 function removeCategory(i){
   const removed=DATA.categories[i];
-  if(!confirm("Remove category “"+(removed.label||"")+"”? Activities using it will fall back to the first category.")) return;
+  if(!confirm("Remove category \u201C"+(removed.label||"")+"\u201D? Activities using it will fall back to the first category.")) return;
   DATA.categories.splice(i,1);
   const fallback=(DATA.categories[0]&&DATA.categories[0].id)||"";
   DATA.legs.forEach(l=>(l.days||[]).forEach(d=>(d.activities||[]).forEach(a=>{if(a.type===removed.id)a.type=fallback;})));
@@ -691,7 +763,7 @@ function addLeg(){
   save(); render();
 }
 function removeLeg(i){
-  if(!confirm("Delete “"+(DATA.legs[i].name||"this leg")+"”?")) return;
+  if(!confirm("Delete \u201C"+(DATA.legs[i].name||"this leg")+"\u201D?")) return;
   DATA.legs.splice(i,1); save(); render();
 }
 function moveLeg(i,dir){
@@ -699,12 +771,11 @@ function moveLeg(i,dir){
   [DATA.legs[i],DATA.legs[j]]=[DATA.legs[j],DATA.legs[i]]; save(); render();
 }
 
-/* ----- LEG EDIT: leg fields + day-by-day ----- */
 function renderLegEdit(id){
   const i=legIndex(id), l=DATA.legs[i];
   const app=document.getElementById("app");
   app.innerHTML=`
-    <div class="edit-banner">✎ Editing <b>${esc(l.name||"this leg")}</b>. Changes save automatically. Use <b>Export</b> when done to publish.</div>
+    <div class="edit-banner">✎ Editing <b>${esc(l.name||"this leg")}</b>. Changes sync automatically to the cloud.</div>
     <button class="btn small" onclick="go('')">← Back to all legs</button>
     <div class="leg-editor" style="margin-top:12px">
       <div class="row2">
@@ -720,22 +791,19 @@ function renderLegEdit(id){
         <label class="form"><span class="lab">Latitude</span><input data-lk="lat" value="${l.lat??""}" placeholder="48.8566"></label>
         <label class="form"><span class="lab">Longitude</span><input data-lk="lng" value="${l.lng??""}" placeholder="2.3522"></label>
       </div>
-      <div class="coordhelp">Tip: click the map to drop the pin and fill coordinates automatically. This is the point everything else is measured from.</div>
+      <div class="coordhelp">Tip: click the map to drop the pin and fill coordinates automatically.</div>
       <div class="pickmap" id="pick"></div>
     </div>
-
     <div class="section-title"><h2>Day by day</h2></div>
     ${legendHTML()}
     <div id="dayList"></div>
     <button class="btn primary" onclick="addDay('${l.id}')">+ Add a day</button>
-
     <div class="legnav">
       <button class="btn" ${i<=0?"disabled style=opacity:.4":`onclick="go('leg/${DATA.legs[i-1].id}')"`}>← Prev leg</button>
       <button class="btn" onclick="go('')">All legs</button>
       <button class="btn" ${i>=DATA.legs.length-1?"disabled style=opacity:.4":`onclick="go('leg/${DATA.legs[i+1].id}')"`}>Next leg →</button>
     </div>
   `;
-  // bind leg field inputs
   app.querySelectorAll("[data-lk]").forEach(inp=>{
     inp.addEventListener("input",e=>{
       const k=inp.getAttribute("data-lk"); let v=e.target.value;
@@ -795,21 +863,18 @@ function dayEditorEl(l,day,di){
     <button class="btn small" data-add-act>+ Add activity</button>
     <span class="mini" style="margin-left:8px">Activities sort by time automatically.</span>
   `;
-  // date + label
   wrap.querySelector('[data-dk="date"]').addEventListener("input",e=>{
     day.date=e.target.value; save();
     const info2=dayInfo(day.date);
     wrap.querySelector("[data-wk]").textContent = info2?info2.weekday:"";
   });
   wrap.querySelector('[data-dk="label"]').addEventListener("input",e=>{ day.label=e.target.value; save(); });
-  // move / delete day
   wrap.querySelector('[data-mv="-1"]').addEventListener("click",()=>moveDay(l,di,-1));
   wrap.querySelector('[data-mv="1"]').addEventListener("click",()=>moveDay(l,di,1));
   wrap.querySelector("[data-del-day]").addEventListener("click",()=>{
     if(!confirm("Delete Day "+(di+1)+"?")) return;
     l.days.splice(di,1); save(); renderDayList(l);
   });
-  // activities
   const actBox=wrap.querySelector("[data-acts]");
   sortedActivities(day).forEach(a=>actBox.appendChild(actEditorEl(l,day,a)));
   wrap.querySelector("[data-add-act]").addEventListener("click",()=>{
@@ -856,7 +921,6 @@ function actEditorEl(l,day,a){
       if(k==="type") row.style.setProperty("--catcolor",catColor(a.type));
     });
   });
-  // Re-sort the day chronologically once a time is finalized (blur / Enter)
   const timeInp=row.querySelector('[data-ak="time"]');
   timeInp.addEventListener("change",()=>{ sortDayActivities(day); save(); renderDayList(l); });
   const pickBtn=row.querySelector("[data-pin]");
@@ -909,12 +973,12 @@ function moveDay(l,di,dir){
   [l.days[di],l.days[j]]=[l.days[j],l.days[di]]; save(); renderDayList(l);
 }
 
-/* ---------------- IMPORT / EXPORT ---------------- */
+/* ---------------- IMPORT / EXPORT (still handy as a manual backup) ---------------- */
 function doExport(){
   const blob=new Blob([JSON.stringify(DATA,null,2)],{type:"application/json"});
   const a=document.createElement("a");
   a.href=URL.createObjectURL(blob); a.download="data.json"; a.click();
-  URL.revokeObjectURL(a.href); toast("Downloaded data.json");
+  URL.revokeObjectURL(a.href); toast("Downloaded data.json (backup copy)");
 }
 function doImport(){ document.getElementById("fileInput").click(); }
 document.getElementById("fileInput").addEventListener("change",e=>{
@@ -924,7 +988,7 @@ document.getElementById("fileInput").addEventListener("change",e=>{
     try{
       const obj=JSON.parse(rd.result);
       if(!obj.trip||!Array.isArray(obj.legs)) throw new Error("bad shape");
-      DATA=normalize(obj); save(); EDIT=false; location.hash=""; render(); toast("Imported!");
+      DATA=normalize(obj); save(); EDIT=false; location.hash=""; render(); toast("Imported and synced to cloud!");
     }catch(err){ alert("That file doesn't look like a valid trip data.json."); }
   };
   rd.readAsText(f); e.target.value="";
